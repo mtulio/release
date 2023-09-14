@@ -33,11 +33,27 @@ fi
 
 # Extract JUnits and let lens process it
 # if [[ "${IS_OPCT_JOB}" != "true" ]]; then
-  echo "#> Extracting "
-  mkdir -p /tmp/results-data
+  echo "#> Extracting JUnit"
+  mkdir -p /tmp/results-data "${ARTIFACT_DIR}/junit"
   tar xfz "${ARTIFACT_DIR}"/certification-results/*.tar.gz -C /tmp/results-data
-  cp /tmp/results-data/plugins/20-openshift-conformance-validated/results/global/*.xml "${ARTIFACT_DIR}/"
+  cp /tmp/results-data/plugins/20-openshift-conformance-validated/results/global/*.xml "${ARTIFACT_DIR}/junit"
+  
+  # Extracting openshift-tests
+  cd /tmp
+  echo "#> logging to the registry"
+  oc registry login
 
+  util_otests="./openshift-tests"
+  echo "[extractor_start][openshift-tests] Extracting the utility"
+  oc image extract \
+      image-registry.openshift-image-registry.svc:5000/openshift/tests:latest \
+      --insecure=true \
+      --file="/usr/bin/openshift-tests"
+
+  echo "Requesting risk analysis for test failures in this job run from sippy:"
+  ./openshift-tests risk-analysis --junit-dir "${ARTIFACT_DIR}/junit" || true
+
+  echo "$(date +%s)" > "${SHARED_DIR}/TEST_TIME_TEST_END"
   # TODO run risk-analysis
 # fi
 
