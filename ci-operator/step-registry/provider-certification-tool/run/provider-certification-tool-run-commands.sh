@@ -10,11 +10,11 @@ extract_opct
 
 if [ -n "${OPCT_DEV_EXTRA_CMD:-}" ]; then
     echo "Running OPCT with regular mode with custom image"
-    ${OPCT_EXEC} run --watch ${OPCT_DEV_EXTRA_CMD:-}
+    ${OPCT_EXEC} run --watch --dev-count=20 ${OPCT_DEV_EXTRA_CMD:-}
 elif [ "${OPCT_RUN_MODE:-}" == "upgrade" ]; then
     echo "Running OPCT with upgrade mode"
     ${OPCT_EXEC} run --watch --mode=upgrade --upgrade-to-image="${TARGET_RELEASE_IMAGE}"
 else
     echo "Running OPCT with regular mode"
-    ${OPCT_EXEC} run --watch
+    ${OPCT_EXEC} run --watch --dev-count=20
 fi

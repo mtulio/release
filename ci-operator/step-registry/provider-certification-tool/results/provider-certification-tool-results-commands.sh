@@ -23,6 +23,29 @@ ${OPCT_EXEC} results "${ARTIFACT_DIR}"/certification-results/*.tar.gz
 show_msg "running: ${OPCT_EXEC} report --verbose"
 ${OPCT_EXEC} report --verbose "${ARTIFACT_DIR}"/certification-results/*.tar.gz
 
+IS_OPCT_JOB=false
+if [[ "redhat-openshift-ecosystem-provider-certification-tool" == *"${JOB_NAME}"* ]] ||
+   [[ "redhat-openshift-ecosystem-opct" == *"${JOB_NAME}"* ]]; then
+  IS_OPCT_JOB=true
+fi
+
+# TODO extract JUnits
+
+# Extract JUnits and let lens process it
+# if [[ "${IS_OPCT_JOB}" != "true" ]]; then
+  echo "#> Extracting "
+  mkdir -p /tmp/results-data
+  tar xfz "${ARTIFACT_DIR}"/certification-results/*.tar.gz -C /tmp/results-data
+  cp /tmp/results-data/plugins/20-openshift-conformance-validated/results/global/*.xml "${ARTIFACT_DIR}/"
+
+  # TODO run risk-analysis
+# fi
+
+# Save results only for OPCT jobs
+if [[ "${IS_OPCT_JOB}" != "true" ]]; then
+  echo "# INFO: Job $JOB_NAME is not allowed to persist baseline results, ignoring it."
+  exit 0
+fi
 #
 # Gather some cluster information and upload certification results
 #
