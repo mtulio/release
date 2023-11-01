@@ -12,16 +12,16 @@ set -o pipefail
 export AWS_SHARED_CREDENTIALS_FILE="${CLUSTER_PROFILE_DIR}/.awscred"
 export REGION="${LEASED_RESOURCE}"
 
-localzone_name=$(aws --region "$REGION" ec2 describe-availability-zones --all-availability-zones --filter Name=state,Values=available Name=zone-type,Values=local-zone | jq -r '.AvailabilityZones[].ZoneName' | shuf | tail -n 1)
+localzone_name=$(aws --region "$REGION" ec2 describe-availability-zones --all-availability-zones --filter Name=state,Values=available Name=zone-type,Values="${EDGE_ZONE_TYPE}" | jq -r '.AvailabilityZones[].ZoneName' | shuf | tail -n 1)
 zone_group_name=$(aws --region "$REGION" ec2 describe-availability-zones --all-availability-zones --filters Name=zone-name,Values="$localzone_name" --query "AvailabilityZones[].GroupName" --output text)
-echo "Local Zone selected: ${localzone_name} (group ${zone_group_name}))"
+echo "Edge Zone selected: ${localzone_name} (group ${zone_group_name})"
 
 if [[ $(aws --region "$REGION" ec2 describe-availability-zones --all-availability-zones \
-        --filters Name=zone-type,Values=local-zone Name=zone-name,Values="$localzone_name" \
+        --filters Name=zone-type,Values="${EDGE_ZONE_TYPE}" Name=zone-name,Values="$localzone_name" \
         --query 'AvailabilityZones[].OptInStatus' --output text) == "opted-in" ]];
 then
     echo "Zone group ${zone_group_name} already opted-in"
-    echo -en "$localzone_name" > "${SHARED_DIR}/local-zone-name.txt"
+    echo -en "$localzone_name" > "${SHARED_DIR}/edge-zone-name.txt"
     exit 0
 fi
 
@@ -31,7 +31,7 @@ echo "Zone group ${zone_group_name} opt-in status modified"
 count=0
 while true; do
     aws --region "$REGION" ec2 describe-availability-zones --all-availability-zones \
-        --filters Name=zone-type,Values=local-zone Name=zone-name,Values="$localzone_name" \
+        --filters Name=zone-type,Values="${EDGE_ZONE_TYPE}" Name=zone-name,Values="$localzone_name" \
         | jq -r '.AvailabilityZones[]' |tee /tmp/az.stat
     if [[ "$(jq -r .OptInStatus /tmp/az.stat)" == "opted-in" ]]; then break; fi
     if [ $count -ge 10 ]; then
@@ -44,4 +44,4 @@ while true; do
 done
 
 echo "Zone group ${zone_group_name} opted-in."
-echo -en "$localzone_name" > "${SHARED_DIR}/local-zone-name.txt"
+echo -en "$localzone_name" > "${SHARED_DIR}/edge-zone-name.txt"

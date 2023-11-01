@@ -10,5 +10,11 @@ ref:
     requests:
       cpu: 10m
       memory: 100Mi
+  env:
+  - name: EDGE_ZONE_TYPE
+    default: "local-zone"
+    documentation: |-
+      Specify the zone type to discover and opt-in it's zone group.
   documentation: |-
-    Opt-in Local Zone group. This change is required to crete subnets in AWS Local Zones.
+    Opt-in Local Zone group. This change is required to crete subnets in
+    AWS Local and Wavelength Zones.

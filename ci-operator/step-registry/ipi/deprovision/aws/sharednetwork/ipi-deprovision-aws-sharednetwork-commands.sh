@@ -34,6 +34,8 @@ function delete_stack() {
 
 if [[ "${AWS_EDGE_POOL_ENABLED-}" == "yes" ]]; then
   delete_stack "sharednetwork_stackname_localzone"
+  delete_stack "sharednetwork_stackname_edge_subnets"
+  delete_stack "sharednetwork_stackname_edge_cagw"
 fi
 
 delete_stack "sharednetworkstackname"

@@ -8,7 +8,7 @@ CONFIG="${SHARED_DIR}/install-config.yaml"
 
 PATCH="${ARTIFACT_DIR}/install-config-local-zone.yaml.patch"
 
-local_zone=$(< "${SHARED_DIR}"/local-zone-name.txt)
+local_zone=$(< "${SHARED_DIR}"/edge-zone-name.txt)
 local_zones_str="[ $local_zone ]"
 
 echo "Selected Local Zone: ${local_zone}"

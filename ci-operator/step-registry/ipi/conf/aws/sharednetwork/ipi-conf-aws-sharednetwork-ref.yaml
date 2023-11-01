@@ -25,3 +25,7 @@ ref:
       in the deprovision step.
       The CloudFormation stack creates the subnet in AWS Local Zone when installing a cluster in existing VPC (also created in the same step,
       using different stack).
+  - name: EDGE_ZONE_TYPE
+    default: "local-zone"
+    documentation: |-
+      Specify the zone type to create the infrastructure resources accordingly.
