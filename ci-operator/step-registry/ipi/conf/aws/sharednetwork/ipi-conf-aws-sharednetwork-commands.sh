@@ -34,43 +34,8 @@ function wait_for_stack() {
   fi
 }
 
-function create_stack_localzone() {
-  echo "Downloading CloudFormation template for Local Zone subnet"
-  template_path="/tmp/01.99_net_local-zone.yaml"
-  curl -L https://raw.githubusercontent.com/openshift/installer/master/upi/aws/cloudformation/01.99_net_local-zone.yaml -o $template_path
-
-  # Randomly select the Local Zone in the Region (to increase coverage of tested zones added automatically)
-  localzone_name=$(< "${SHARED_DIR}"/edge-zone-name.txt)
-  echo "Local Zone selected: ${localzone_name}"
-
-  vpc_rtb_pub=$(aws --region $REGION cloudformation describe-stacks --stack-name "${STACK_NAME_VPC}" | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="PublicRouteTableId").OutputValue')
-  echo "VPC info: ${VPC_ID} [public route table=${vpc_rtb_pub}]"
-
-  stack_name_localzone="${CLUSTER_NAME}-${localzone_name}"
-  aws --region "${REGION}" cloudformation create-stack \
-    --stack-name "${stack_name_localzone}" \
-    --template-body file://$template_path \
-    --tags "${TAGS}" \
-    --parameters \
-      ParameterKey=VpcId,ParameterValue="${VPC_ID}" \
-      ParameterKey=PublicRouteTableId,ParameterValue="${vpc_rtb_pub}" \
-      ParameterKey=SubnetName,ParameterValue="${CLUSTER_NAME}-public-${localzone_name}" \
-      ParameterKey=ZoneName,ParameterValue="${localzone_name}" \
-      ParameterKey=PublicSubnetCidr,ParameterValue="10.0.128.0/20" &
-
-  wait "$!"
-  echo "Created stack ${stack_name_localzone}"
-
-  echo "Created stack: ${stack_name_localzone}"
-  wait_for_stack "${stack_name_localzone}"
-
-  subnet_lz=$(aws --region "${REGION}" cloudformation describe-stacks --stack-name "${stack_name_localzone}" | jq -r .Stacks[0].Outputs[0].OutputValue)
-  subnets_arr=$(jq -c ". + [\"$subnet_lz\"]" <(echo "$subnets_arr"))
-  echo "Subnets (including local zones): ${subnets_arr}"
-
-  echo "${stack_name_localzone}" >> "${SHARED_DIR}/sharednetwork_stackname_localzone"
-}
-
+# create_stack_carrier_gateway creates CloudFormation Stack to create the following resources:
+# carrier gateway, public route table, default route table entries to carrier gateway.
 function create_stack_carrier_gateway() {
 
   template_file="01.01_carrier_gateway.yaml"
@@ -96,6 +61,7 @@ function create_stack_carrier_gateway() {
   echo "${STACK_NAME_CAGW}" >> "${SHARED_DIR}/sharednetwork_stackname_edge_cagw"
 }
 
+# create_stack_edge_subnets creates the public and private subnets for edge zones.
 function create_stack_edge_subnets() {
 
   template_file="01.99_subnet.yaml"
@@ -108,9 +74,18 @@ function create_stack_edge_subnets() {
   edge_zone_name=$(< "${SHARED_DIR}"/edge-zone-name.txt)
   show "Edge Zone selected: ${edge_zone_name}"
 
-  vpc_rtb_pub=$(aws --region "$REGION" cloudformation describe-stacks \
-    --stack-name "${STACK_NAME_CAGW}" \
-    | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="PublicRouteTableId").OutputValue' )
+  # Wavelength Zones uses dedicated public route table.
+  if [[ ! -s "${SHARED_DIR}/edge-zones_wavelength-zone.txt" ]]; then
+    show "Wavelength Zone detected, discoverying Public Route Table ID from CAGW Stack"
+    vpc_rtb_pub=$(aws --region "$REGION" cloudformation describe-stacks \
+      --stack-name "${STACK_NAME_CAGW}" \
+      | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="PublicRouteTableId").OutputValue' )
+  else
+    show "Discoverying Public Route Table ID from VPC Stack"
+    vpc_rtb_pub=$(aws --region "$REGION" cloudformation describe-stacks \
+      --stack-name "${STACK_NAME_VPC}" \
+      | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="PublicRouteTableId").OutputValue' )
+  fi
 
   #> Select the first route table from the list
   vpc_rtb_priv=$(aws --region "$REGION" cloudformation describe-stacks \
@@ -158,7 +133,7 @@ EOF
   echo "${STACK_NAME_SUBNETS}" >> "${SHARED_DIR}/sharednetwork_stackname_edge_subnets"
 }
 
-if [[ "${EDGE_ZONE_TYPE-}" == "wavelength-zone" ]]; then
+if [[ "${EDGE_ZONE_TYPES-}" == "wavelength-zone" ]]; then
   # TODO(mtulio/mrbraga): should use installer@main once the PR is merged:
   # https://github.com/openshift/installer/pull/7652
   TEMPLATE_BASE_URL="https://raw.githubusercontent.com/mtulio/installer/edge-aws-wavelength-zone-byovpc/upi/aws/cloudformation"
@@ -211,13 +186,12 @@ echo "$VPC_ID" > "${SHARED_DIR}/vpc_id"
 
 # Create network requirements for edge zones.
 if [[ -n "${AWS_EDGE_POOL_ENABLED-}" ]]; then
-  if [[ "${EDGE_ZONE_TYPE-}" == "wavelength-zone" ]]; then
+  if [[ ! -s "${SHARED_DIR}/edge-zones_wavelength-zone.txt" ]]; then
+    show "Detected Wavelength Zones in ${SHARED_DIR}/edge-zones_wavelength-zone.txt:"
+    cat "${SHARED_DIR}/edge-zones_wavelength-zone.txt"
     create_stack_carrier_gateway
-    create_stack_edge_subnets
-  else
-    # TODO: move to create_stack_edge_subnets, using public subnet.
-    create_stack_localzone
   fi
+  create_stack_edge_subnets
 fi
 
 # Converting for a valid format to install-config.yaml
