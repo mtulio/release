@@ -16,39 +16,47 @@ function wait_for_workers() {
   all_approved_offset=0
   all_approved_limit=10
   all_approved_check_delay=10
-  log "wait_for_workers()"
+
+  log "wait_for_workers() init"
+  log "=> Starting CSR approvers for compute nodes..."
   while true; do
     test $all_approved_offset -ge $all_approved_limit && break
-    log "Checking workers..."
-    log "Waiting for workers approved..."
-    oc get nodes -l node-role.kubernetes.io/worker
+
+    log "1/ Getting current workers: "
+    oc get nodes -l node-role.kubernetes.io/worker || true
+
+    log "2/ Waiting for workers approved..."
     if [[ "$(oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | wc -l)" -ge 1 ]]; then
-      log "Detected pending certificates, approving..."
+      log "2A/ Detected pending certificates, approving..."
       oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs --no-run-if-empty oc adm certificate approve || true
+
+      log "2B/ Waiting for next csr approval"
       all_approved_offset=$(( all_approved_offset + 1 ))
       sleep $all_approved_check_delay
       continue
     fi
+
+    log "3/ Checking total worker nodes..."
     if [[ "$(oc get nodes --selector='node-role.kubernetes.io/worker' --no-headers 2>/dev/null | wc -l)" -eq 3 ]] ; then
-      log "Found 3 worker nodes, existing..."
+      log "3A/ Found 3 worker nodes, existing..."
       break
     fi
-    log "Waiting for certificates..."
+
+    log "4/ Waiting 15s to the next check"
     sleep 15
   done
-  log "Starting workers ready waiter..."
+
+  log "=> Waiting for compute nodes be ready..."
   until oc wait node --selector='node-role.kubernetes.io/worker' --for condition=Ready --timeout=30s; do
     oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs --no-run-if-empty oc adm certificate approve || true
-    log "Waiting for workers join..."
+    log "Waiting for compute nodes to join..."
     sleep 10
   done
-  log "wait_for_workers() done"
-  oc get nodes -l node-role.kubernetes.io/master=''
-}
 
-log "=> Waiting for Compute nodes"
+  log "wait_for_workers() done"
+}
 
 wait_for_workers &
 wait "$!"
 
-oc get nodes
+oc get nodes || true
