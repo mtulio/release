@@ -10,7 +10,6 @@ export KUBECONFIG=${SHARED_DIR}/kubeconfig
 source "${SHARED_DIR}/init-fn.sh" || true
 
 UP_COUNT=0
-
 while true; do
   if [[ $UP_COUNT -ge 5 ]];
   then
