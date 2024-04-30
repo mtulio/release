@@ -17,6 +17,22 @@ STEP_WORKDIR=${STEP_WORKDIR:-/tmp}
 INSTALL_DIR=${STEP_WORKDIR}/install-dir
 mkdir -vp "${INSTALL_DIR}"
 
+# TODO add image registry to pull secret
+#REGISTRY_HOST="registry.${CLUSTER}.ci.openshift.org"
+# pull_secret_path=${CLUSTER_PROFILE_DIR}/pull-secret
+# build02_secrets="/var/run/vault/secrets/.dockerconfigjson"
+# extract_build02_auth=$(jq -c '.auths."registry.apps.build02.vmc.ci.openshift.org"' ${build02_secrets})
+# final_pull_secret=$(jq -c --argjson auth "$extract_build02_auth" '.auths["registry.apps.build02.vmc.ci.openshift.org"] += $auth' "${pull_secret_path}")
+
+# REGISTRY_HOST=$(dirname $(dirname $RELEASE_IMAGE_LATEST ))
+
+
+echo "Logging to the registry: $(dirname $(dirname $RELEASE_IMAGE_LATEST ))"
+export PULL_SECRET=/tmp/pull-secret
+cp ${CLUSTER_PROFILE_DIR}/pull-secret $PULL_SECRET
+oc registry login --to $PULL_SECRET
+
+
 # export PATH=${PATH}:/tmp
 
 # function echo_date() {
@@ -59,6 +75,7 @@ controlPlane:
 publish: External
 #sshKey: |
 #  {SSH_PUB_KEY}
+pullSecret: '$(cat ${PULL_SECRET} | awk -v ORS= -v OFS= '{$1=$1}1')'
 EOF
 
 log "Patching install-config.yaml"
