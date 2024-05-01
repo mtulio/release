@@ -25,5 +25,4 @@ function update_image_registry() {
   log "update_image_registry() done"
 }
 
-
 update_image_registry

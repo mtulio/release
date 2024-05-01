@@ -1,7 +1,4 @@
 #!/bin/bash
-set -o nounset
-set -o errexit
-set -o pipefail
 
 #
 # Delete CloudFormation stacks created by AWS UPI.
@@ -9,6 +6,10 @@ set -o pipefail
 # then the rest of the infrastructure stacks will be deleted
 # in serial.
 #
+
+set -o nounset
+set -o errexit
+set -o pipefail
 
 trap 'CHILDREN=$(jobs -p); if test -n "${CHILDREN}"; then kill ${CHILDREN} && wait; fi' TERM
 

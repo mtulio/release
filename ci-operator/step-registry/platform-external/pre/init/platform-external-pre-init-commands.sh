@@ -1,11 +1,13 @@
 #!/bin/bash
+
 set -o nounset
 set -o errexit
 set -o pipefail
 
 #
-# Init functions to SHARED_DIR
+# Create shared functions to SHARED_DIR
 #
+# TODO(mtulio): move "install functions" to base image, when possible.
 
 echo "Creating shared ini file: ${SHARED_DIR}/init-fn.sh"
 cat << EOF > "${SHARED_DIR}/init-fn.sh"

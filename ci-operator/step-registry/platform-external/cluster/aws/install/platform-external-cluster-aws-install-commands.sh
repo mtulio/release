@@ -1,4 +1,21 @@
 #!/bin/bash
+
+#
+# UPI install on AWS using CloudFormation.
+#
+# input: ignition files
+# output:
+# - infrastructure created on AWS
+# - cloudformation stack ARNs saved in control files to deprovision steps
+#
+# TODO(mtulio): this step is based on upi-install-aws-cluster, removing
+# the openshift-install commands (conf/ignition moved to pre-steps).
+# To Dos:
+# 1/ make the UPI step upi-install-aws-cluster generic (openshift-install agnostic, like this)
+# 2/ merge this step with upi-install-aws-cluster
+# 3/ move to CloudFormation stack set deployment creating a one-shot CloudFormation command.
+#
+
 set -euo pipefail
 
 trap 'CHILDREN=$(jobs -p); if test -n "${CHILDREN}"; then kill ${CHILDREN} && wait; fi' TERM
@@ -28,6 +45,7 @@ AWS_REGION=${LEASED_RESOURCE}
 
 export AWS_DEFAULT_REGION="${AWS_REGION}"  # CLI prefers the former
 
+# TODO(mtulio): move to step vars
 export BOOTSTRAP_INSTANCE_TYPE=m6i.xlarge
 export MASTER_INSTANCE_TYPE=m6i.xlarge
 export WORKER_INSTANCE_TYPE=m6i.xlarge
@@ -48,7 +66,8 @@ echo "Patch CloudFormation Templates"
 echo "==============================="
 
 # Update until the changes in not available in the image.
-
+# FIXME(mtulio): move to valid path
+# TODO(mtulio): move to CloudFormation StackSet (single stack deployment)
 TEMPLATES_BASE=https://raw.githubusercontent.com/mtulio/installer
 TEMPLATES_VERSION=upi-installer-ci
 TEMPLATES_PATH=upi/aws/cloudformation
@@ -100,32 +119,22 @@ function gather_bootstrap_and_fail() {
 }
 
 # echo "Installing from initial release ${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}"
-# SSH_PRIV_KEY_PATH=${CLUSTER_PROFILE_DIR}/ssh-privatekey
-# PULL_SECRET_PATH=${CLUSTER_PROFILE_DIR}/pull-secret
 OPENSHIFT_INSTALL_INVOKER=openshift-internal-ci/${JOB_NAME}/${BUILD_ID}
 AWS_SHARED_CREDENTIALS_FILE=${CLUSTER_PROFILE_DIR}/.awscred
 EXPIRATION_DATE=$(date -d '4 hours' --iso=minutes --utc)
 # PULL_SECRET=${CLUSTER_PROFILE_DIR}/pull-secret
 
-# export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
-# export PULL_SECRET_PATH
 export OPENSHIFT_INSTALL_INVOKER
 export AWS_SHARED_CREDENTIALS_FILE
 export EXPIRATION_DATE
-# export PULL_SECRET
-
-# mkdir -p ~/.ssh
-# cp "${SSH_PRIV_KEY_PATH}" ~/.ssh/
-# cp ${SHARED_DIR}/install-config.yaml ${SHARED_DIR}/install-config.yaml
-# export PATH=${HOME}/.local/bin:${PATH}
-
-# pushd ${SHARED_DIR}
 
 base_domain=$(yq3 r "${SHARED_DIR}/install-config.yaml" 'baseDomain')
 CLUSTER_NAME=$(yq3 r "${SHARED_DIR}/install-config.yaml" 'metadata.name')
 
 echo ${AWS_REGION} > ${SHARED_DIR}/AWS_REGION
 echo ${CLUSTER_NAME} > ${SHARED_DIR}/CLUSTER_NAME
+
+# TODO(mtulio): move to step vars
 MACHINE_CIDR=10.0.0.0/16
 
 # begin bootstrapping

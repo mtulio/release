@@ -43,7 +43,7 @@ function wait_for_workers() {
     fi
 
     log "4/ Waiting 15s to the next check"
-    sleep 15
+    sleep 60
   done
 
   log "=> Waiting for compute nodes be ready..."
