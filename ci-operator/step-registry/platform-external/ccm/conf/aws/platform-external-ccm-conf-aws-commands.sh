@@ -17,15 +17,16 @@ if [[ "${PLATFORM_EXTERNAL_CCM_ENABLED-}" != "yes" ]]; then
   exit 0
 fi
 
+log "Reading 'aws-cloud-controller-manager' image from release [${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE-}]"
 # Build from: https://github.com/openshift/cloud-provider-aws/blob/master/Dockerfile.openshift
 #CCM_IMAGE="quay.io/mrbraga/openshift-cloud-provider-aws:latest"
-CCM_IMAGE="$(oc adm release info "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" --image-for='aws-cloud-controller-manager')"
+CCM_IMAGE="$(oc adm release info -a ${SHARED_DIR}/pull-secret-with-ci "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" --image-for='aws-cloud-controller-manager')"
 #CCM_NAMESPACE=external-cloud-controller-manager
 CCM_NAMESPACE=openshift-cloud-controller-manager
 CCM_MANIFEST=ccm-00-deployment.yaml
 CCM_MANIFEST_PATH="${SHARED_DIR}"/${CCM_MANIFEST}
 
-echo "Using CCM image=${CCM_IMAGE}"
+log "Using CCM image=${CCM_IMAGE}"
 
 log "Creating CloudController Manager deployment"
 

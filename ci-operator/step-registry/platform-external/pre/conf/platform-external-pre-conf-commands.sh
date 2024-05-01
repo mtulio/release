@@ -27,9 +27,12 @@ install_yq4
 # Append CI credentials to pull-secret
 #
 log "Logging to CI registry: $(dirname $(dirname $RELEASE_IMAGE_LATEST ))"
-export PULL_SECRET=/tmp/pull-secret
-cp ${CLUSTER_PROFILE_DIR}/pull-secret $PULL_SECRET
+export PULL_SECRET=/tmp/pull-secret-with-ci
+cp -v ${CLUSTER_PROFILE_DIR}/pull-secret $PULL_SECRET
 oc registry login --to $PULL_SECRET
+
+log "Saving CI pull secret to extract image info to CI registry: "
+cp -v ${PULL_SECRET} ${SHARED_DIR}/pull-secret-with-ci
 
 #
 # Enable CCM
