@@ -1,6 +1,6 @@
 ref:
   as: platform-external-cluster-aws-install
-  from: installer
+  from: tools
   commands: platform-external-cluster-aws-install-commands.sh
   grace_period: 1h
   resources:
