@@ -46,7 +46,7 @@ function wait_for_workers() {
     sleep 60
   done
 
-  log "=> Waiting for compute nodes be ready..."
+  log "=> Waiting for compute nodes be in Ready status..."
   until oc wait node --selector='node-role.kubernetes.io/worker' --for condition=Ready --timeout=30s; do
     oc get csr -ojson | jq -r '.items[] | select(.status == {} ) | .metadata.name' | xargs --no-run-if-empty oc adm certificate approve || true
     log "Waiting for compute nodes to join..."

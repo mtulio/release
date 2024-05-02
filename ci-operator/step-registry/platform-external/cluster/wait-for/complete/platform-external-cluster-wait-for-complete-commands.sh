@@ -31,7 +31,7 @@ while true; do
   fi
   if openshift-install --dir=${INSTALL_DIR} wait-for install-complete 2>&1 | grep --line-buffered -v password; then
     OK_COUNT=$(( OK_COUNT + 1 ))
-    log "install-complete OK [$OK_COUNT/$OK_LIMIT]\n"
+    log "\ninstall-complete OK [$OK_COUNT/$OK_LIMIT]\n"
     sleep 5
     continue
   fi
@@ -49,11 +49,3 @@ done
 log "Install Completed!"
 
 date "+%F %X" > "${SHARED_DIR}/CLUSTER_INSTALL_END_TIME"
-
-# touch ${ARTIFACT_DIR}/install-complete
-
-# oc get pods -A | tee ${ARTIFACT_DIR}/oc-pods-all.yaml
-
-# oc get nodes | tee ${ARTIFACT_DIR}/oc-nodes.yaml
-
-# oc get co | tee ${ARTIFACT_DIR}/oc-clusteroperators.yaml

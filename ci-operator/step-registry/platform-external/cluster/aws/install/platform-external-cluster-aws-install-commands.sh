@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 # UPI install on AWS using CloudFormation.
@@ -22,19 +22,20 @@ trap 'CHILDREN=$(jobs -p); if test -n "${CHILDREN}"; then kill ${CHILDREN} && wa
 #Save exit code for must-gather to generate junit
 trap 'echo "$?" > "${SHARED_DIR}/install-status.txt"' EXIT TERM
 
+source "${SHARED_DIR}/init-fn.sh" || true
+
 function save_stack_events_to_artifacts()
 {
+  echo "## exit handler / saving stack events ##"
   set +o errexit
   while read -r stack_name
   do
     aws --region ${AWS_REGION} cloudformation describe-stack-events --stack-name ${stack_name} --output json > "${ARTIFACT_DIR}/stack-events-${stack_name}.json"
-  done < "${NEW_STACKS}"
+  done < "${NEW_STACKS-}"
   set -o errexit
 }
 #Save stacks events
 trap 'save_stack_events_to_artifacts' EXIT TERM INT
-
-source "${SHARED_DIR}/init-fn.sh" || true
 
 # ensure LEASED_RESOURCE is set
 if [[ -z "${LEASED_RESOURCE}" ]]; then

@@ -8,7 +8,7 @@ ref:
       cpu: 10m
       memory: 100Mi
   documentation: |-
-    The IPI AWS configure step generates the AWS-specific install-config.yaml contents based on the cluster profile and optional input files.
+    The step configure the CCM deployment manifests for AWS when using Platform External.
   dependencies:
     - name: "release:latest"
       env: OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE

@@ -8,21 +8,27 @@ set -o pipefail
 #export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="quay.io/openshift-release-dev/ocp-release:4.15.0-rc.5-x86_64"
 
 source "${SHARED_DIR}/init-fn.sh" || true
-
 test -f "${SHARED_DIR}/infra_resources.env" && source "${SHARED_DIR}/infra_resources.env"
 
-
+# Proceed only when CCM is should be deployed.
 if [[ "${PLATFORM_EXTERNAL_CCM_ENABLED-}" != "yes" ]]; then
   log "Ignoring CCM Installation setup. PLATFORM_EXTERNAL_CCM_ENABLED!=yes [${PLATFORM_EXTERNAL_CCM_ENABLED}]"
   exit 0
 fi
 
-log "Reading 'aws-cloud-controller-manager' image from release [${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE-}]"
+#
+# Setup CCM deployment manifests
+#
+
+# Discovering the CCM image from OpenShift release payload to prevent extra discovery for
+# compatibility matrix between upstream images and kubernetes used to this dynamic OpenShift
+# deployment.
+log "Discovering controller image 'aws-cloud-controller-manager' from release [${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE-}]"
 # Build from: https://github.com/openshift/cloud-provider-aws/blob/master/Dockerfile.openshift
 #CCM_IMAGE="quay.io/mrbraga/openshift-cloud-provider-aws:latest"
 CCM_IMAGE="$(oc adm release info -a ${SHARED_DIR}/pull-secret-with-ci "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" --image-for='aws-cloud-controller-manager')"
 #CCM_NAMESPACE=external-cloud-controller-manager
-CCM_NAMESPACE=openshift-cloud-controller-manager
+#CCM_NAMESPACE=openshift-cloud-controller-manager
 CCM_MANIFEST=ccm-00-deployment.yaml
 CCM_MANIFEST_PATH="${SHARED_DIR}"/${CCM_MANIFEST}
 
@@ -139,7 +145,9 @@ spec:
           type: Directory
 EOF
 
-# TODO: need to assert the required RBAC.
+# TODO(mtulio): assert the correct RBAC to create namespace and permissions required
+# to run AWS CCM without inheriting from the default integration.
+
 # cat << EOF > "$CCM_MANIFEST_PATH"
 # ---
 # apiVersion: v1
