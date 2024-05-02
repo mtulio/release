@@ -11,18 +11,18 @@ export KUBECONFIG=${SHARED_DIR}/kubeconfig
 source "${SHARED_DIR}/init-fn.sh" || true
 
 function wait_for_masters() {
-  log "wait_for_masters()"
+  log "0/ wait_for_masters()"
   set +e
   until oc wait node --selector='node-role.kubernetes.io/master' --for condition=Ready --timeout=30s; do
     log "Checking masters..."
     oc get nodes -l node-role.kubernetes.io/master
     if [[ "$(oc get nodes --selector='node-role.kubernetes.io/master' --no-headers 2>/dev/null | wc -l)" -eq 3 ]] ; then
-      log "Found 3 masters nodes, existing..."
+      log "Found 3 masters nodes, exiting..."
       break
     fi
     sleep 30
   done
-  log "wait_for_masters() done"
+  log "1/ wait_for_masters() done"
   oc get nodes -l node-role.kubernetes.io/master=''
 }
 
