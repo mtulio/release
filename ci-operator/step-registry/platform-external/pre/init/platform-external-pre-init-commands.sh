@@ -22,20 +22,28 @@ export -f log
 # Install awscli (python3 only)
 function install_awscli() {
   log "Checking/installing awscli..."
+  which python || true
+  whereis python || true
+
   if ! command -v aws &> /dev/null
   then
-      log "Installing AWS cli..."
+      log "Install AWS cli..."
       export PATH="\${HOME}/.local/bin:\${PATH}"
       if command -v pip3 &> /dev/null
       then
-        pip3 install --user awscli >/dev/null
+          python -m ensurepip
+          pip3 install --user awscli
       else
-        log "pip3 not found, falling back to pip-3"
-        pip-3 install --user awscli >/dev/null
+          if [ "\$(python -c 'import sys;print(sys.version_info.major)')" -eq 2 ]
+          then
+            easy_install --user 'pip<21'
+            pip install --user awscli
+          else
+            log "No pip available exiting..."
+            exit 1
+          fi
       fi
   fi
-  log "Installing aws done:"
-  which aws
 }
 export -f install_awscli
 
