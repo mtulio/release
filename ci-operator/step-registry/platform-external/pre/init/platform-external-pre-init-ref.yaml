@@ -1,6 +1,9 @@
 ref:
   as: platform-external-pre-init
-  from: cli
+  from_image:
+    namespace: ocp
+    name: "4.15"
+    tag: upi-installer
   grace_period: 10m
   commands: platform-external-pre-init-commands.sh
   resources:
