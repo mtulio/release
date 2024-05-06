@@ -11,7 +11,7 @@ PLATFORM_TYPE="none: {}"
 if [[ $PLATFORM_NAME != "none" ]]; then
   PLATFORM_TYPE="external:
     platformName: ${PLATFORM_NAME}
-    cloudControllerManager: External
+    cloudControllerManager: \"${CONFIG_PLATFORM_EXTERNAL_CCM-}\"
   "
 fi
 

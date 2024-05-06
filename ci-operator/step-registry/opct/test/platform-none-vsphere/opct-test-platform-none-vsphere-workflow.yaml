@@ -2,18 +2,15 @@ workflow:
   as: opct-test-platform-none-vsphere
   steps:
     pre:
-      - chain: opct-cluster-vsphere-upi-platform-none-pre
-      - ref: provider-certification-tool-conf-dedicated
-      - ref: provider-certification-tool-conf-setup
-      - ref: provider-certification-tool-wait-ready
+    - chain: opct-cluster-vsphere-upi-platform-none-pre
+    - chain: opct-pre
     test:
-      - ref: provider-certification-tool-run
-      - ref: provider-certification-tool-results
+    - chain: opct-conformance-test
     post:
-      - chain: gather
-      - ref: provider-certification-tool-destroy
-      - ref: upi-deprovision-vsphere
-      - ref: upi-deprovision-vsphere-dns
+    - chain: gather
+    - chain: opct-post
+    - ref: upi-deprovision-vsphere
+    - ref: upi-deprovision-vsphere-dns
   documentation: |-
     The Openshift E2E vSphere (with no integration, platform: none) chain executes the provider certification tool, 
     gather's the results archive, and performs certification namespace teardown.

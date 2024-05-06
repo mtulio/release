@@ -1,0 +1,17 @@
+workflow:
+  as: openshift-e2e-external-vsphere
+  steps:
+    pre:
+    - chain: upi-vsphere-platform-external-ovn-pre
+    test:
+    - ref: openshift-e2e-test
+    post:
+    - chain: upi-vsphere-platform-external-ovn-post
+    #dependencies:
+    #  OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE: "release:initial"
+    #  OPENSHIFT_UPGRADE_RELEASE_IMAGE_OVERRIDE: "release:latest"
+    env:
+      #PROVIDER_NAME: vsphere
+      CONFIG_PLATFORM_EXTERNAL_CCM: External
+  documentation: |-
+    The origin E2E workflow to validate clusters installed on AWS with platform type external.

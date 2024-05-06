@@ -12,5 +12,13 @@ ref:
   env:
     - name: PLATFORM_NAME
       default: none
+    - name: CONFIG_PLATFORM_EXTERNAL_CCM
+      default: ""
+      documentation: |-
+        install-config.yaml option for platform.external.cloudControllerManager.
+        Valid values: "" | "External"
+        "": empty values the cluster will be installed as platform "None", the the kubelet cloud-provider flag will not be set as External.
+        "External": the Kubelet and KCM will set the --cloud-provider flag to external, signalizing the components to use external CCM.
+        Defaults to "" (empty).
   documentation: |-
     The upi-conf-platform-none step modifies the platform type in the install-config for bringing up a platform none cluster.
