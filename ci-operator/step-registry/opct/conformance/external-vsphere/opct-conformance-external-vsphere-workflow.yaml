@@ -1,5 +1,5 @@
 workflow:
-  as: opct-test-platform-external-vsphere
+  as: opct-conformance-external-vsphere
   steps:
     pre:
     - chain: upi-vsphere-platform-external-ovn-pre
@@ -12,5 +12,7 @@ workflow:
     - ref: upi-deprovision-vsphere
     - ref: upi-deprovision-vsphere-dns
   documentation: |-
+    OPCT default conformance workflow running on OCP cluster installed with
+    platform type 'External' on vSphere infrastructure.
     The Openshift E2E vSphere (with no integration, platform: External) chain executes the provider certification tool, 
     gather's the results archive, and performs certification namespace teardown.

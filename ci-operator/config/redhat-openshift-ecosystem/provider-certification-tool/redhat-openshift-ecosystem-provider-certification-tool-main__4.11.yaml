@@ -33,7 +33,7 @@ tests:
     cluster_profile: vsphere-2
     env:
       OPCT_RUN_MODE: upgrade
-    workflow: opct-test-platform-none-vsphere
+    workflow: opct-conformance-none-vsphere
   timeout: 8h0m0s
 zz_generated_metadata:
   branch: main

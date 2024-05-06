@@ -1,5 +1,5 @@
 {
-	"path": "opct/test/platform-none-vsphere/opct-test-platform-none-vsphere-workflow.yaml",
+	"path": "opct/conformance/none-vsphere/opct-conformance-none-vsphere-workflow.yaml",
 	"owners": {
 		"approvers": [
 			"mtulio",

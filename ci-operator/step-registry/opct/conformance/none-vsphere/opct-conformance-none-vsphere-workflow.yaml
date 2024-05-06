@@ -1,5 +1,5 @@
 workflow:
-  as: opct-test-platform-none-vsphere
+  as: opct-conformance-none-vsphere
   steps:
     pre:
     - chain: opct-cluster-vsphere-upi-platform-none-pre
@@ -12,5 +12,7 @@ workflow:
     - ref: upi-deprovision-vsphere
     - ref: upi-deprovision-vsphere-dns
   documentation: |-
+    OPCT default conformance workflow running on OCP cluster installed with
+    platform type 'None' on vSphere infrastructure.
     The Openshift E2E vSphere (with no integration, platform: none) chain executes the provider certification tool, 
     gather's the results archive, and performs certification namespace teardown.

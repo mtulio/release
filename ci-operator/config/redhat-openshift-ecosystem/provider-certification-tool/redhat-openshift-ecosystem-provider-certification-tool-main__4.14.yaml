@@ -33,7 +33,7 @@ tests:
     cluster_profile: vsphere-2
     env:
       OPCT_DEV_EXTRA_CMD: --plugins-image=openshift-tests-provider-cert:devel
-    workflow: opct-test-platform-none-vsphere
+    workflow: opct-conformance-none-vsphere
   timeout: 6h0m0s
 - as: platform-external-vsphere
   cron: 0 0 * * 6
@@ -42,7 +42,7 @@ tests:
     env:
       OPCT_DEV_EXTRA_CMD: --plugins-image=openshift-tests-provider-cert:devel
       PLATFORM_NAME: vsphere
-    workflow: opct-test-platform-external-vsphere
+    workflow: opct-conformance-external-vsphere
   timeout: 6h0m0s
 - as: platform-none-vsphere-upgrade
   cron: 0 0 * * 6
@@ -51,7 +51,7 @@ tests:
     env:
       OPCT_RUN_MODE: upgrade
       UPGRADE_TO_CHANNEL_TYPE: candidate
-    workflow: opct-test-platform-none-vsphere
+    workflow: opct-conformance-none-vsphere
   timeout: 8h0m0s
 zz_generated_metadata:
   branch: main
