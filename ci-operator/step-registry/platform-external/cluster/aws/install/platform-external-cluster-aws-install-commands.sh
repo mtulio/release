@@ -8,8 +8,8 @@
 # - infrastructure created on AWS
 # - cloudformation stack ARNs saved in control files to deprovision steps
 #
-# TODO(mtulio): this step is based on upi-install-aws-cluster, removing
-# the openshift-install commands (conf/ignition moved to pre-steps).
+# TODO(mtulio): this step is based on upi-install-aws-cluster. To merge both,
+# the openshift-install commands (conf/ignition) must be moved moved to pre-steps there.
 # To Dos:
 # 1/ make the UPI step upi-install-aws-cluster generic (openshift-install agnostic, like this)
 # 2/ merge this step with upi-install-aws-cluster

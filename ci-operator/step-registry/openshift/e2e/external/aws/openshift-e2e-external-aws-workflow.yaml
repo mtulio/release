@@ -8,7 +8,6 @@ workflow:
     post:
     - chain: gather
     - chain: platform-external-cluster-aws-post
-    # Not working:
     dependencies:
       OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE: "release:initial"
       OPENSHIFT_UPGRADE_RELEASE_IMAGE_OVERRIDE: "release:latest"

@@ -472,6 +472,22 @@ tests:
       PLATFORM_EXTERNAL_CCM_ENABLED: "yes"
     workflow: openshift-e2e-external-aws
   timeout: 6h0m0s
+- always_run: false
+  as: e2e-external-vsphere
+  optional: true
+  steps:
+    cluster_profile: vsphere-2
+    workflow: openshift-e2e-external-vsphere
+  timeout: 6h0m0s
+- always_run: false
+  as: e2e-external-vsphere-ccm
+  optional: true
+  steps:
+    cluster_profile: vsphere-2
+    env:
+      CONFIG_PLATFORM_EXTERNAL_CCM: External
+    workflow: openshift-e2e-external-vsphere
+  timeout: 6h0m0s
 zz_generated_metadata:
   branch: master
   org: openshift
