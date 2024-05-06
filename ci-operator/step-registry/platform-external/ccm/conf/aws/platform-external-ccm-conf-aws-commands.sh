@@ -24,6 +24,7 @@ fi
 # compatibility matrix between upstream images and kubernetes used to this dynamic OpenShift
 # deployment.
 log "Discovering controller image 'aws-cloud-controller-manager' from release [${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE-}]"
+
 # Build from: https://github.com/openshift/cloud-provider-aws/blob/master/Dockerfile.openshift
 #CCM_IMAGE="quay.io/mrbraga/openshift-cloud-provider-aws:latest"
 CCM_IMAGE="$(oc adm release info -a ${SHARED_DIR}/pull-secret-with-ci "${OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE}" --image-for='aws-cloud-controller-manager')"
@@ -310,7 +311,6 @@ EOF
 #           path: /etc/kubernetes
 #           type: Directory
 # EOF
-
 
 log "Created!"
 echo "$CCM_MANIFEST" >> ${SHARED_DIR}/ccm-manifests.txt

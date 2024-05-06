@@ -15,7 +15,6 @@ INSTALL_DIR=${STEP_WORKDIR}/install-dir
 mkdir -vp "${INSTALL_DIR}"
 
 source "${SHARED_DIR}/init-fn.sh" || true
-install_butane
 
 log "Copying to install dir"
 cp -vp "${SHARED_DIR}"/install-config.yaml "${INSTALL_DIR}"/install-config.yaml
@@ -84,10 +83,11 @@ EOF
 }
 
 function process_butane() {
-    local src_file=$1; shift
-    local dest_file=$1
+  install_butane
+  local src_file=$1; shift
+  local dest_file=$1
 
-    butane "$src_file" -o "$dest_file"
+  butane "$src_file" -o "$dest_file"
 }
 
 if [[ "${PLATFORM_EXTERNAL_CCM_ENABLED-}" == "yes" ]]; then
@@ -111,7 +111,7 @@ if [[ "${PLATFORM_EXTERNAL_CCM_ENABLED-}" == "yes" ]]; then
 fi
 
 #
-# Clean up MAPI manifests
+# Save infrastructure to shared dir
 #
 
 cp -vf "${INSTALL_DIR}"/manifests/cluster-infrastructure-02-config.yml "${ARTIFACT_DIR}"/cluster-infrastructure-02-config.yml
@@ -120,19 +120,28 @@ cp -vf "${INSTALL_DIR}"/manifests/cluster-infrastructure-02-config.yml "${ARTIFA
 # Clean up MAPI manifests
 #
 
+### Remove control plane machines and CPMS
 rm -vf "${INSTALL_DIR}"/openshift/99_openshift-cluster-api_master-machines-*.yaml
-rm -vf "${INSTALL_DIR}"/openshift/99_openshift-cluster-api_worker-machineset-*.yaml
 rm -vf "${INSTALL_DIR}"/openshift/99_openshift-machine-api_master-control-plane-machine-set.yaml
 
-log "\n
-#
+### Remove compute machinesets (optional)
+rm -vf "${INSTALL_DIR}"/openshift/99_openshift-cluster-api_worker-machineset-*.yaml
+
+log "\n#
 # << Ignition config/generation >>
 #"
 
 openshift-install --dir="${INSTALL_DIR}" create ignition-configs &
 wait "$!"
 
-cp -vf "${INSTALL_DIR}"/*.ign "${SHARED_DIR}"/
-cp -vf "${INSTALL_DIR}"/auth/* "${SHARED_DIR}"/
-cp -rvf "${INSTALL_DIR}"/auth "${SHARED_DIR}"/
-cp -vf "${INSTALL_DIR}"/metadata.json "${SHARED_DIR}"/
+log "\n# << Saving to shared dir >>#"
+
+# cp -vf "${INSTALL_DIR}"/*.ign "${SHARED_DIR}"/
+# cp -vf "${INSTALL_DIR}"/auth/* "${SHARED_DIR}"/
+# cp -rvf "${INSTALL_DIR}"/auth "${SHARED_DIR}"/
+# cp -vf "${INSTALL_DIR}"/metadata.json "${SHARED_DIR}"/
+
+cp -vt "${SHARED_DIR}" \
+  "${dir}"/auth/* \
+  "${dir}/metadata.json" \
+  "${dir}"/*.ign
