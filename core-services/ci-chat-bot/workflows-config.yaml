@@ -342,7 +342,18 @@ workflows:
     platform: aws
   hypershift-hostedcluster-workflow:
     platform: aws-2
-  opct-test-platform-none-vsphere:
+  opct-conformance-none-vsphere:
+    platform: vsphere
+  opct-conformance-external-vsphere:
+    platform: vsphere
+  opct-conformance-external-aws:
+    platform: aws
+  openshift-e2e-external-aws:
+    platform: aws
+  # TODO(mtulio) Platform External: add workflows CCM (enabled by env var)
+  openshift-e2e-external-aws-ccm:
+    platform: aws
+  openshift-e2e-external-vsphere-ccm:
     platform: vsphere
   openshift-e2e-aws:
     platform: aws
