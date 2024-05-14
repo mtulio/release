@@ -1,0 +1,9 @@
+chain:
+  as: platform-external-cluster-aws-install
+  steps:
+  - ref: platform-external-cluster-aws-install-image
+  - ref: platform-external-cluster-aws-install
+  # WIP/experiment using single stack:
+  #- ref: platform-external-cluster-aws-install-stackset
+  documentation: >-
+    This chain contains all of the steps to provision an OpenShift cluster using the AWS UPI workflow.
