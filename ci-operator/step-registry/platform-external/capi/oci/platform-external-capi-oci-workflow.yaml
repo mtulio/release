@@ -1,0 +1,40 @@
+workflow:
+  as: platform-external-capi-oci
+  steps:
+    pre:
+    - chain: platform-external-capi-oci-pre
+    test:
+    - ref: openshift-e2e-test
+    post:
+    - chain: gather
+    - chain: platform-external-capi-oci-post
+    dependencies:
+      OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE: "release:latest"
+    env:
+      TEST_ARGS: '--disable-monitor=service-type-load-balancer-availability'
+  documentation: |-
+    End-to-end for `platform: external` on OCI with infrastructure
+    provisioned by the installer through CAPOCI.
+
+    THIS IS THE COMPATIBILITY TEST, not a second AWS job. The installer
+    embeds CAPA, so the AWS arm can only show that artifact paths are
+    honoured. It cannot embed CAPOCI and never will, so everything here --
+    the controller binary, the CRDs, the credential Secret, the three hooks,
+    the object-storage offload of the bootstrap ignition -- arrives from
+    outside. A green run here is the evidence that a partner cloud needs no
+    installer code; a green run on AWS alone is not.
+
+    KNOWN TO FAIL TODAY, FOR A REASON OUTSIDE BOTH REPOSITORIES. There is no
+    published RHCOS artifact for OCI, so no machine can boot. The install
+    step detects this before provisioning anything and exits with that
+    explanation rather than waiting out a timeout, and every job using this
+    workflow is marked optional until an image exists. The fix wanted is a
+    generic, provider-agnostic artifact override, not an OCI special case --
+    an exception made for one partner is an exception the next partner also
+    has to ask for.
+
+    Until then, set PLATFORM_EXTERNAL_CAPI_INFRA_ONLY=true: the install stops
+    once Cluster.status.infrastructureReady is true, which still covers the
+    VCN, the subnets, the security rules, the API load balancer, DNS and the
+    infraReady hook -- the whole provider-registration mechanism -- and boots
+    nothing. That arm is the one with real signal today.

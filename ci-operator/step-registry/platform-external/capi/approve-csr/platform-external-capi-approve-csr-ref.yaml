@@ -1,0 +1,47 @@
+ref:
+  as: platform-external-capi-approve-csr
+  from: cli
+  commands: platform-external-capi-approve-csr-commands.sh
+  grace_period: 5m
+  timeout: 30m
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_CSR_TIMEOUT
+    default: "20m"
+    documentation: |-
+      How long to keep approving before giving up.
+  - name: PLATFORM_EXTERNAL_CAPI_EXPECTED_NODES
+    default: "0"
+    documentation: |-
+      Stop as soon as this many nodes are Ready. 0 means run for the whole
+      timeout, which is the right setting when the node count is not known
+      up front.
+  documentation: |-
+    Approves pending kubelet certificate signing requests on a
+    `platform: external` cluster.
+
+    THIS EXISTS BECAUSE OF A REAL GAP, NOT BECAUSE OF A CI QUIRK.
+    cluster-machine-approver auto-approves a node's client and serving CSRs
+    only when it can match the request to a Machine object. On
+    `platform: external` the installer generates no MachineSets, the Cluster
+    API Machines live in the installer's temporary local control plane and
+    never reach the cluster, so there is no Machine to match and no CSR is
+    ever approved. A cluster whose workers were provisioned by a partner's
+    Cluster API provider therefore stops with every worker stuck in Pending.
+
+    The install steps run an equivalent loop in the background, because
+    approval has to overlap `create cluster` and one CI step cannot overlap
+    the step before it. This ref is the after-the-fact case -- a cluster that
+    came up without the loop, or new nodes joining during a test -- and the two
+    are idempotent with each other: approving an already-approved CSR is a
+    no-op.
+
+    BLANKET APPROVAL IS ACCEPTABLE HERE AND NOWHERE ELSE. It is safe on a
+    short-lived CI cluster on an unroutable network. It is not a pattern to
+    ship: the product answer is a webhook that checks a CSR against the
+    instance it claims to come from, through an interface every partner cloud
+    can implement, rather than a per-cloud approver. Until that exists this is
+    documented as a known limitation of the platform.

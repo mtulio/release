@@ -1,0 +1,100 @@
+ref:
+  as: platform-external-capi-destroy
+  from: upi-installer
+  commands: platform-external-capi-destroy-commands.sh
+  grace_period: 30m
+  timeout: 1h30m
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_CLOUD
+    default: ""
+    documentation: |-
+      "aws" or "oci". Selects how the cloud credentials are presented, which
+      is the one part of a teardown that cannot be provider-agnostic: the
+      provider authenticates the way its own cloud expects.
+  - name: PLATFORM_EXTERNAL_CAPI_EXAMPLE
+    default: ""
+    documentation: |-
+      The example the install used. Destroy needs it for the preDestroy hook
+      program, whose path metadata.json records relative to the install
+      directory and whose bytes live in the example rather than in anything
+      the install wrote.
+  - name: PLATFORM_EXTERNAL_CAPI_ARTIFACTS
+    default: ""
+    documentation: |-
+      Where to re-stage the provider artifacts. This must be the same
+      directory the install used, because metadata.json records absolute
+      paths and `destroy cluster` starts the provider from them.
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER
+    default: "aws"
+    documentation: |-
+      Name passed to `openshift-install extract cluster-api`, for a provider
+      the installer embeds. Used only when the cloud is "aws".
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER_IMAGE
+    default: ""
+    documentation: |-
+      Pullspec of the provider's controller image, for a provider the
+      installer does not embed. Used only when the cloud is "oci", and it
+      must be the same image the install step used -- a teardown run against
+      a different provider build is a teardown whose behaviour nobody has
+      tested.
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER_BINARY
+    default: "/manager"
+    documentation: |-
+      Path of the controller binary inside the provider image. Declared here
+      as well as on the install ref, with the same default, because the two
+      stagings have to agree: a binary staged from a different path or under a
+      different name than the install used is a provider the teardown cannot
+      start.
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER_BINARY_NAME
+    default: "cluster-api-provider-oci"
+    documentation: |-
+      Name the controller is staged under. Note that this is NOT
+      platform.external.clusterAPI.binaryPath: on OCI that path is
+      capoci-shim.sh, and the shim execs this file beside it. So the name has
+      to match what the shim looks for, not what the install-config names.
+  - name: PLATFORM_EXTERNAL_CAPI_COMPONENTS_URL
+    default: ""
+    documentation: |-
+      URL of the provider's component manifest, pinned to the same release as
+      the controller image. Used only when the cloud is "oci".
+  documentation: |-
+    Removes a cluster provisioned through `platform: external` with a
+    user-supplied Cluster API provider.
+
+    This is not an ordinary deprovision and the difference is the point. The
+    installer has no SDK for the partner's cloud, so it cannot sweep by tag
+    the way the integrated destroyers do. Instead `destroy cluster` rebuilds
+    the local Cluster API control plane, recreates the objects recorded under
+    <install-dir>/.clusterapi_output/ paused, restores their status, unpauses
+    them, runs the preDestroy hook, and deletes the Cluster -- relying on the
+    Cluster API contract that a Cluster's finalizer is not released until its
+    infrastructure object is gone.
+
+    Three consequences for a CI step, each of which has to be handled here
+    rather than assumed:
+
+      1. The provider binary has to be staged again, at the same paths
+         metadata.json records. Pods share no filesystem and the binary is
+         around 100 MB, far too large for ${SHARED_DIR}, so it is re-staged
+         from the image by the same function the install step used. One
+         function, so the two stagings cannot drift.
+
+      2. The install directory has to be partly rebuilt. metadata.json and
+         .clusterapi_output travel through ${SHARED_DIR}; the hook scripts
+         come from the example in the image.
+
+      3. For a provider that authenticates through an identityRef, the
+         credential Secret has to be put back. collectManifests deliberately
+         excludes Secrets from .clusterapi_output
+         (pkg/infrastructure/clusterapi/clusterapi.go:696-700), so a restored
+         identity object points at a Secret that is not there. The symptom is
+         not an authentication error -- it is a delete that hangs for the full
+         45-minute deleteTimeout with nothing in the log naming the cause.
+
+    A destroy that finds no metadata.json exits 0: an install that failed
+    before it created a Cluster left nothing to remove, and failing here would
+    hide the real failure behind a second one.

@@ -1,0 +1,19 @@
+{
+	"path": "platform-external/capi/init/platform-external-capi-init-ref.yaml",
+	"owners": {
+		"approvers": [
+			"elmiko",
+			"jcpowermac",
+			"mtulio",
+			"rvanderp3",
+			"vr4manta"
+		],
+		"reviewers": [
+			"elmiko",
+			"jcpowermac",
+			"mtulio",
+			"rvanderp3",
+			"vr4manta"
+		]
+	}
+}

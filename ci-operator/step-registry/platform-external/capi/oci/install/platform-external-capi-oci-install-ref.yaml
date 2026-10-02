@@ -1,0 +1,104 @@
+ref:
+  as: platform-external-capi-oci-install
+  from: upi-installer
+  commands: platform-external-capi-oci-install-commands.sh
+  grace_period: 1h
+  timeout: 3h
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_EXAMPLE
+    default: "oci-capoci"
+    documentation: |-
+      Example directory under upi/external/examples to install from.
+  - name: PLATFORM_EXTERNAL_CAPI_ARTIFACTS
+    default: "/tmp/capoci-artifacts"
+    documentation: |-
+      Where the CAPOCI controller binary and components are staged. It must
+      match what the example's install-config names; the conf step asserts
+      that it does.
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER_IMAGE
+    default: "ghcr.io/oracle/cluster-api-oci-controller:v0.17.0"
+    documentation: |-
+      CAPOCI's published controller image. This is the whole point of the OCI
+      arm: the installer does not embed this provider and never will, so the
+      binary has to come from the provider's own release. The AWS arm uses
+      `openshift-install extract cluster-api`, which only works for a
+      provider the installer already ships -- it proves artifact substitution
+      but not provider registration.
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER_BINARY
+    default: "/manager"
+    documentation: |-
+      Path of the controller binary inside the provider image.
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER_BINARY_NAME
+    default: "cluster-api-provider-oci"
+    documentation: |-
+      Name the controller is staged under. Note that this is NOT
+      platform.external.clusterAPI.binaryPath: that path is capoci-shim.sh,
+      a wrapper the example ships, and the shim execs this file beside it.
+      The indirection exists because the installer passes --health-addr and
+      CAPOCI's equivalent flag is --health-probe-bind-address; pflag exits
+      non-zero on an unknown flag, so the controller cannot be started
+      directly. The same two names are declared on the destroy ref, with the
+      same defaults, because the two stagings must agree.
+  - name: PLATFORM_EXTERNAL_CAPI_COMPONENTS_URL
+    default: "https://github.com/oracle/cluster-api-provider-oci/releases/download/v0.17.0/infrastructure-components.yaml"
+    documentation: |-
+      CAPOCI's published component manifest, which carries the CRDs the
+      installer loads into its local control plane. Pinned to the same
+      release as the controller image: a controller and a CRD set from
+      different releases is a failure that surfaces as an unexplained
+      reconcile stall.
+  - name: PLATFORM_EXTERNAL_CAPI_INFRA_ONLY
+    default: "false"
+    documentation: |-
+      When "true", sets OPENSHIFT_INSTALL_INFRASTRUCTURE_ONLY so the install
+      stops once Cluster.status.infrastructureReady is true. On OCI this is
+      the arm worth running first, because it exercises the network, the API
+      server load balancer, DNS and the infraReady hook without needing a
+      boot image.
+  - name: OCI_IGNITION_BUCKET
+    default: ""
+    documentation: |-
+      Private Object Storage bucket for the bootstrap ignition. Defaults to
+      "<cluster name>-ignition", created and removed by this step.
+  dependencies:
+  - name: "release:latest"
+    env: OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
+  documentation: |-
+    Installs an OpenShift cluster on OCI through `platform: external`, driven
+    by CAPOCI -- a Cluster API provider the installer has never been compiled
+    against.
+
+    This is the arm that tests the mechanism rather than the reference. CAPA
+    can be extracted from the installer binary; CAPOCI cannot exist inside it,
+    so everything here -- the controller binary, the CRDs, the credential
+    Secret, the hooks -- arrives as a user artifact. If this passes, a partner
+    can do the same for a cloud nobody in OpenShift has heard of.
+
+    THREE PHASES, NOT TWO. The AWS arm runs `create manifests` then `create
+    cluster`. Two are enough there because CAPA offloads the oversized
+    bootstrap ignition to S3 itself. CAPOCI has no object-store offload of any
+    kind, and OCI caps instance metadata at 32,000 bytes, which the bootstrap
+    ignition exceeds by two orders of magnitude. So a third phase sits in the
+    middle:
+
+      phase 1  create manifests        -> the infrastructure ID exists
+      phase 2  create ignition-configs -> bootstrap.ign exists, oversized
+      phase 2.5 upload it, mint a pre-authenticated request, replace the file
+               on disk with a ~300-byte pointer config
+      phase 3  create cluster          -> reads the stub this step wrote
+
+    No installer change makes this work: bootstrap.Bootstrap implements Load()
+    (pkg/asset/ignition/bootstrap/bootstrap.go:39-41) and is in the
+    IgnitionConfigs target, so the installer re-reads what was written.
+
+    KNOWN TO FAIL TODAY, FOR A REASON OUTSIDE THIS REPOSITORY. There is no
+    published RHCOS artifact for OCI, so OCI_IMAGE_ID has nothing to point at
+    and no machine can boot. The step fails with that explanation rather than
+    a timeout, and the job is marked optional until an image exists. See
+    upi/external/examples/oci-capoci/docs/boot-image.md -- the fix wanted
+    there is a generic, provider-agnostic artifact set
+    (OPENSHIFT_INSTALL_RHCOS_ARTIFACTS_JSON), not an OCI special case.

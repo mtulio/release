@@ -1,0 +1,47 @@
+chain:
+  as: platform-external-capi-aws-pre
+  steps:
+  - ref: platform-external-pre-init
+  - ref: platform-external-capi-init
+  - ref: platform-external-capi-conf
+  - ref: platform-external-capi-aws-install
+  - ref: platform-external-capi-approve-csr
+  - ref: platform-external-cluster-task-image-registry-emptydir
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_EXAMPLE
+    default: "aws-capa"
+    documentation: |-
+      Set once here so the conf, install and destroy steps cannot disagree
+      about which example is under test. They read the same example from the
+      image three times and a mismatch would surface as a teardown that
+      cannot find the hook it is told to run.
+  - name: PLATFORM_EXTERNAL_CAPI_ARTIFACTS
+    default: "/tmp/capa-artifacts"
+    documentation: |-
+      Must equal the directory the example's install-config names. The conf
+      step asserts it rather than rewriting the install-config, so a mismatch
+      fails before anything is provisioned.
+  documentation: |-
+    Provisions an OpenShift cluster on AWS through `platform: external` with
+    CAPA supplied as a user artifact.
+
+    Deliberately NOT the platform-external-cluster-aws-pre chain, and the
+    difference is the whole point. That chain is UPI: CloudFormation templates
+    in the step registry create the infrastructure and the installer only
+    renders ignition. Here the installer provisions, by starting a Cluster API
+    provider binary it was handed and applying manifests for CRDs it was never
+    compiled against. Nothing in this chain knows anything about AWS beyond
+    the credentials and the region.
+
+    It is also shorter than the UPI chain by several steps, which is the
+    result worth noticing rather than an omission: there is no separate
+    bootstrap, CCM, wait-for-control-plane, wait-for-compute or
+    destroy-bootstrap step, because `openshift-install create cluster` does
+    all of it. The CCM manifests are rendered into the install directory
+    before `create manifests` and the infraReady hook publishes the DNS
+    records, which is exactly what a partner would have to do.
+
+    ipi-conf and its relatives are not used. The example's install-config is
+    the base and the conf step overrides five values in it; starting from an
+    IPI-shaped config and patching toward External would test a file no
+    partner will ever write.

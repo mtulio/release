@@ -1,0 +1,41 @@
+chain:
+  as: platform-external-capi-oci-pre
+  steps:
+  - ref: platform-external-pre-init
+  - ref: platform-external-capi-init
+  - ref: platform-external-capi-conf
+  - ref: platform-external-capi-oci-install
+  - ref: platform-external-capi-approve-csr
+  - ref: platform-external-cluster-task-image-registry-emptydir
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_EXAMPLE
+    default: "oci-capoci"
+    documentation: |-
+      Set once here so conf, install and destroy read the same example.
+  - name: PLATFORM_EXTERNAL_CAPI_ARTIFACTS
+    default: "/tmp/capoci-artifacts"
+    documentation: |-
+      Must equal the directory the example's install-config names. Different
+      from the AWS arm's on purpose: the two arms stage different binaries
+      and a shared path would let one run's leftovers satisfy the other's
+      check.
+  documentation: |-
+    Provisions an OpenShift cluster on OCI through `platform: external`,
+    driven by CAPOCI.
+
+    This is the arm that proves the claim. CAPA can be extracted from the
+    installer binary, so the AWS arm shows that artifacts can be substituted;
+    CAPOCI cannot exist inside the installer at all, so this arm shows that a
+    provider the installer was never compiled against can be registered,
+    started and driven to a working cluster. If only one of the two can run,
+    this is the one that carries the evidence.
+
+    It is the same chain as the AWS arm with one step swapped, and that
+    symmetry is the result, not a convenience: everything cloud-specific is
+    inside the install step and the example, and nothing cloud-specific is in
+    the installer.
+
+    EXPECT THIS TO FAIL UNTIL AN RHCOS IMAGE EXISTS FOR OCI. The install step
+    stops with that explanation rather than waiting out a timeout. Run it
+    with PLATFORM_EXTERNAL_CAPI_INFRA_ONLY=true to exercise the network, the
+    API load balancer, DNS and the infraReady hook without booting anything.

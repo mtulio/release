@@ -1,0 +1,19 @@
+{
+	"path": "platform-external/capi/oci/install/platform-external-capi-oci-install-ref.yaml",
+	"owners": {
+		"approvers": [
+			"elmiko",
+			"jcpowermac",
+			"mtulio",
+			"rvanderp3",
+			"vr4manta"
+		],
+		"reviewers": [
+			"elmiko",
+			"jcpowermac",
+			"mtulio",
+			"rvanderp3",
+			"vr4manta"
+		]
+	}
+}

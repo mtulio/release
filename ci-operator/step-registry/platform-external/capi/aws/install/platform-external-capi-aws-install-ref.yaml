@@ -1,0 +1,53 @@
+ref:
+  as: platform-external-capi-aws-install
+  from: upi-installer
+  commands: platform-external-capi-aws-install-commands.sh
+  grace_period: 1h
+  timeout: 2h
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_EXAMPLE
+    default: "aws-capa"
+    documentation: |-
+      Example directory under upi/external/examples to install from.
+  - name: PLATFORM_EXTERNAL_CAPI_ARTIFACTS
+    default: "/tmp/capa-artifacts"
+    documentation: |-
+      Where the CAPA controller binary and components are extracted to. It
+      must match what the example's install-config names; the conf step
+      asserts that it does.
+  - name: PLATFORM_EXTERNAL_CAPI_INFRA_ONLY
+    default: "false"
+    documentation: |-
+      When "true", sets OPENSHIFT_INSTALL_INFRASTRUCTURE_ONLY so the install
+      stops once Cluster.status.infrastructureReady is true, after the
+      infraReady hook and before any ignition Secret or machine exists. This
+      is the cheapest arm that still exercises DNS and the hook contract, and
+      it is the one to run first when bringing up a new provider.
+  dependencies:
+  - name: "release:latest"
+    env: OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE
+  documentation: |-
+    Installs an OpenShift cluster on AWS through `platform: external`, with
+    CAPA supplied to the installer as a user artifact rather than used as an
+    integrated platform.
+
+    This is not the AWS IPI path and shares no code with it. The installer is
+    told nothing about AWS: it starts a Cluster API controller binary it was
+    handed, applies Cluster API manifests it cannot type-check, and runs three
+    partner hooks. CAPA is the reference provider precisely because its
+    behaviour is known -- what is under test is the External mechanism, not
+    AWS.
+
+    Two phases, because the infrastructure ID does not exist until asset
+    resolution has run and the Cluster API manifests must carry it:
+
+      phase 1  create manifests   -> the infrastructure ID becomes readable
+                                     and external-install/ is substituted
+      phase 2  create cluster     -> the installer starts CAPA and provisions
+
+    Editing between the two is safe: external-install/ is not an asset load
+    path.

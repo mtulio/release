@@ -1,0 +1,39 @@
+workflow:
+  as: platform-external-capi-aws
+  steps:
+    pre:
+    - chain: platform-external-capi-aws-pre
+    test:
+    - ref: openshift-e2e-test
+    post:
+    - chain: gather
+    - chain: platform-external-capi-aws-post
+    dependencies:
+      OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE: "release:latest"
+    env:
+      TEST_ARGS: '--disable-monitor=service-type-load-balancer-availability'
+  documentation: |-
+    End-to-end for `platform: external` on AWS with infrastructure provisioned
+    by the installer through CAPA supplied as a user artifact.
+
+    WHAT THIS TESTS, AND WHAT IT DOES NOT. It tests that the installer can
+    start a Cluster API provider binary it was handed, apply manifests for
+    CRDs it cannot type-check, run the three partner hooks and reach
+    install-complete, then tear the cluster down again. It does not test AWS:
+    CAPA is here because its behaviour is known, and if it were replaced by
+    any other provider nothing outside the example directory would change.
+    The companion platform-external-capi-oci workflow is the arm that proves
+    that claim, because CAPOCI cannot be extracted from the installer binary
+    at all.
+
+    It is deliberately NOT the existing openshift-e2e-external-aws workflow
+    with steps swapped. That workflow is UPI -- CloudFormation in the step
+    registry builds the infrastructure and the installer only renders
+    ignition. Running both against the same platform is the point: one shows
+    what a partner has to build today, the other what they would build
+    instead.
+
+    The e2e load-balancer availability monitor is disabled. On this platform
+    the service load balancer is the partner's CCM, so a disruption there is
+    a finding about the partner's cloud rather than about the payload under
+    test, and letting it fail the job would make the signal unreadable.

@@ -1,0 +1,23 @@
+ref:
+  as: platform-external-capi-init
+  from: cli
+  grace_period: 10m
+  commands: platform-external-capi-init-commands.sh
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  documentation: |-
+    Writes ${SHARED_DIR}/capi-fn.sh, the shared shell functions for the
+    platform-external CAPI workflows.
+
+    It exists for the same reason platform-external-pre-init does: several
+    steps need the same logic, and steps do not share a filesystem.
+
+    The functions that matter are the artifact stagers. A Cluster API
+    infrastructure provider's controller binary is ~100 MB, so it cannot be
+    carried between steps in ${SHARED_DIR}, which is Secret-backed and size
+    limited. Both the install step and the destroy step therefore stage the
+    provider artifacts into their own pod's /tmp, and both call the same
+    function here to do it -- otherwise the two stagings drift and `destroy
+    cluster` starts a different provider build than `create cluster` did.

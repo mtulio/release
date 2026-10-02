@@ -1,0 +1,63 @@
+ref:
+  as: platform-external-capi-conf
+  from: upi-installer
+  commands: platform-external-capi-conf-commands.sh
+  grace_period: 30m
+  resources:
+    requests:
+      cpu: 100m
+      memory: 300Mi
+  documentation: |-
+    Builds ${SHARED_DIR}/install-config.yaml for a `platform: external` install
+    driven by a user-supplied Cluster API infrastructure provider.
+
+    Unlike platform-external-pre-conf, this step does not patch an install-config
+    that ipi-conf generated. It takes the example's own install-config.yaml --
+    from upi/external/examples/<example>/ inside the image, which in a presubmit
+    is the pull request's copy -- and overrides only the five values CI owns:
+    metadata.name, baseDomain, pullSecret, sshKey and the controlPlane/compute
+    replica counts.
+
+    That direction is deliberate. The example install-config is the artifact
+    under test: it carries the platform.external.clusterAPI block, the provider
+    controller arguments and the three hook declarations, and those are exactly
+    the things a regression would land in. Regenerating it from CI defaults
+    would test the step instead of the example.
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_EXAMPLE
+    default: ""
+    documentation: |-
+      Name of the directory under upi/external/examples to install from,
+      for example "aws-capa" or "oci-capoci".
+  - name: PLATFORM_EXTERNAL_CAPI_ARTIFACTS
+    default: ""
+    documentation: |-
+      Directory the provider controller binary and components will be staged
+      into by the install step. It must equal the directory the example's
+      install-config already names in platform.external.clusterAPI, and the
+      step asserts that it does -- the two are a single fact written twice and
+      they drift silently.
+  - name: BASE_DOMAIN
+    default: ""
+    documentation: |-
+      Fallback DNS zone, used when the cluster profile provides no baseDomain
+      file. The cluster's api, api-int and *.apps records are created under it
+      by the example's hooks, not by the installer.
+  - name: CONTROL_PLANE_REPLICAS
+    default: "3"
+    documentation: |-
+      controlPlane.replicas.
+  - name: COMPUTE_REPLICAS
+    default: "0"
+    documentation: |-
+      compute.replicas. The default is 0 and that is not a reduced-cost
+      choice: the installer generates no MachineSets for `platform: external`
+      (pkg/asset/machines/worker.go), so this number does not create workers.
+      Day-0 workers are Cluster API Machines in the example's
+      external-install/machines/ directory.
+  - name: REGISTRY_AUTH_FILE
+    default: "/tmp/secret/pull-secret-with-ci"
+    documentation: |-
+      Path of the copy of the registry auth file. When the release payload is
+      not on quay.io the step logs in to the build cluster registry so the
+      credentials are available to later steps and to openshift-tests.

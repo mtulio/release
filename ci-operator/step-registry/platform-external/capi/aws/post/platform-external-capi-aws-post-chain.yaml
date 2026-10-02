@@ -1,0 +1,30 @@
+chain:
+  as: platform-external-capi-aws-post
+  steps:
+  - ref: platform-external-capi-destroy
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_CLOUD
+    default: "aws"
+  - name: PLATFORM_EXTERNAL_CAPI_EXAMPLE
+    default: "aws-capa"
+  - name: PLATFORM_EXTERNAL_CAPI_ARTIFACTS
+    default: "/tmp/capa-artifacts"
+    documentation: |-
+      The same directory the install used, and it has to be: metadata.json
+      records the provider's binary and components as absolute paths and
+      `destroy cluster` opens them. The destroy step re-checks this against
+      metadata.json after staging.
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER
+    default: "aws"
+    documentation: |-
+      Provider name for `openshift-install extract cluster-api`. On this arm
+      the provider is one the installer embeds, so the teardown can recover
+      the identical binary from the identical image.
+  documentation: |-
+    Deprovisions the cluster the platform-external-capi-aws-pre chain created.
+
+    One step, not the UPI chain's several, because there is nothing to sweep:
+    `destroy cluster` rebuilds the local Cluster API control plane from
+    .clusterapi_output/ and asks CAPA to delete the Cluster. See the
+    platform-external-capi-destroy ref for the three things a CI pod has to
+    reconstitute before that can work.

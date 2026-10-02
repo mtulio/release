@@ -1,0 +1,42 @@
+chain:
+  as: platform-external-capi-oci-post
+  steps:
+  - ref: platform-external-capi-destroy
+  env:
+  - name: PLATFORM_EXTERNAL_CAPI_CLOUD
+    default: "oci"
+  - name: PLATFORM_EXTERNAL_CAPI_EXAMPLE
+    default: "oci-capoci"
+  - name: PLATFORM_EXTERNAL_CAPI_ARTIFACTS
+    default: "/tmp/capoci-artifacts"
+  - name: PLATFORM_EXTERNAL_CAPI_PROVIDER_IMAGE
+    default: "ghcr.io/oracle/cluster-api-oci-controller:v0.17.0"
+    documentation: |-
+      Must be the same image the install step used. Pinned in two places
+      rather than one because a teardown run against a different provider
+      build is a teardown whose behaviour nobody has tested; if this is
+      bumped, bump it on the install ref in the same change.
+  - name: PLATFORM_EXTERNAL_CAPI_COMPONENTS_URL
+    default: "https://github.com/oracle/cluster-api-provider-oci/releases/download/v0.17.0/infrastructure-components.yaml"
+    documentation: |-
+      Same release as the controller image, for the same reason.
+  documentation: |-
+    Deprovisions the cluster the platform-external-capi-oci-pre chain created.
+
+    The teardown is where the External path is least forgiving, and both of
+    its hazards are OCI's rather than the mechanism's:
+
+      - CAPOCI authenticates through an OCIClusterIdentity that names a
+        Secret, and the installer deliberately excludes Secrets from
+        .clusterapi_output. The restored identity therefore points at nothing
+        unless the destroy step rebuilds the Secret, which it does. Without
+        it the delete does not report an authentication error -- it hangs for
+        the full 45-minute deleteTimeout with nothing in the log naming the
+        cause.
+
+      - The bootstrap ignition lives in Object Storage behind a
+        pre-authenticated URL, which is an unauthenticated credential over
+        the cluster's day-0 secrets. The preDestroy hook revokes it; the
+        destroy step then checks independently that the object is gone,
+        because a hook that silently did nothing and one that worked are
+        indistinguishable from the installer's exit code.
