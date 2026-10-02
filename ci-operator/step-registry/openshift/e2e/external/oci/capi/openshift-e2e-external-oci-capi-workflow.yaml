@@ -1,5 +1,5 @@
 workflow:
-  as: platform-external-capi-oci
+  as: openshift-e2e-external-oci-capi
   steps:
     pre:
     - chain: platform-external-capi-oci-pre

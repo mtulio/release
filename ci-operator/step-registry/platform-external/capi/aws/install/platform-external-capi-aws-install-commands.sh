@@ -39,11 +39,11 @@ CLUSTER_NAME=$(<"${SHARED_DIR}/CLUSTER_NAME")
 BASE_DOMAIN=$(<"${SHARED_DIR}/BASE_DOMAIN")
 capi_log "Installing ${CLUSTER_NAME}.${BASE_DOMAIN} from example ${PLATFORM_EXTERNAL_CAPI_EXAMPLE}"
 
-# ----------------------------------------------------------- phase zero: artifacts
+# --- phase zero: artifacts
 
 capi_stage_embedded_provider aws
 
-# ----------------------------------------------------------- phase zero: DNS zone
+# --- phase zero: DNS zone
 
 # The postProvision hook publishes the *.apps wildcard, and its zone is an
 # argument rather than installer knowledge -- the installer never reads it.
@@ -73,7 +73,7 @@ if [[ $(grep -c -- "--input-dns-zone=${HOSTED_ZONE_ID}" "${INSTALL_DIR}/install-
   exit 1
 fi
 
-# ----------------------------------------------------------- phase zero: CCM
+# --- phase zero: CCM
 
 # Fills the cloud controller manager image and its credentials into
 # external-install/extra-manifests/. Must run before `create manifests`: the
@@ -86,7 +86,7 @@ fi
 # node.cloudprovider.kubernetes.io/uninitialized taint.
 "${EXAMPLE_DIR}/scripts/prepare-ccm.sh" "${INSTALL_DIR}"
 
-# ----------------------------------------------------------- phase one
+# --- phase one: create manifests
 
 capi_log "Phase 1: create manifests"
 openshift-install create manifests --log-level=debug --dir="${INSTALL_DIR}"
@@ -124,7 +124,7 @@ capi_assert_no_placeholders 'CLUSTER_ID|ami-REPLACE' "${SUBST_INPUTS[@]}"
 
 cp -v "${INSTALL_DIR}/external-install/cluster.yaml" "${ARTIFACT_DIR}/capi-cluster.yaml"
 
-# ----------------------------------------------------------- phase two
+# --- phase two: create cluster
 
 if [[ ${PLATFORM_EXTERNAL_CAPI_INFRA_ONLY} == "true" ]]; then
   capi_log "OPENSHIFT_INSTALL_INFRASTRUCTURE_ONLY: stopping at infrastructureReady"

@@ -1,19 +1,17 @@
 {
-	"path": "platform-external/capi/aws/platform-external-capi-aws-workflow.yaml",
+	"path": "openshift/e2e/external/aws/capi/openshift-e2e-external-aws-capi-workflow.yaml",
 	"owners": {
 		"approvers": [
 			"elmiko",
 			"jcpowermac",
 			"mtulio",
-			"rvanderp3",
-			"vr4manta"
+			"rvanderp3"
 		],
 		"reviewers": [
 			"elmiko",
 			"jcpowermac",
 			"mtulio",
-			"rvanderp3",
-			"vr4manta"
+			"rvanderp3"
 		]
 	}
 }

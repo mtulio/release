@@ -17,3 +17,5 @@ workflow:
       TEST_ARGS: '--disable-monitor=service-type-load-balancer-availability'
   documentation: |-
     The origin E2E workflow to validate clusters installed on AWS with platform type external.
+    The installation steps are based on agnostic installation method with adapted CloudFormation
+    templates used on UPI.

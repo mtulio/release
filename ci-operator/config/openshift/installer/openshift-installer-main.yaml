@@ -1619,6 +1619,22 @@ tests:
       PLATFORM_EXTERNAL_CCM_ENABLED: "yes"
     workflow: openshift-e2e-external-aws
 - always_run: false
+  as: e2e-external-aws-capi
+  optional: true
+  steps:
+    cluster_profile: openshift-org-aws
+    workflow: openshift-e2e-external-aws-capi
+- always_run: false
+  as: e2e-external-oci-capi
+  capabilities:
+  - intranet
+  optional: true
+  steps:
+    cluster_profile: oci-agent-qe
+    env:
+      PLATFORM_EXTERNAL_CAPI_INFRA_ONLY: "true"
+    workflow: openshift-e2e-external-oci-capi
+- always_run: false
   as: e2e-aws-ovn-heterogeneous
   optional: true
   pipeline_run_if_changed: aws

@@ -2775,6 +2775,20 @@ tests:
     env:
       PLATFORM_EXTERNAL_CCM_ENABLED: "yes"
     workflow: openshift-e2e-external-aws
+- as: e2e-external-aws-capi
+  cron: '@yearly'
+  steps:
+    cluster_profile: openshift-org-aws
+    workflow: openshift-e2e-external-aws-capi
+- as: e2e-external-oci-capi
+  capabilities:
+  - intranet
+  cron: '@yearly'
+  steps:
+    cluster_profile: oci-agent-qe
+    env:
+      PLATFORM_EXTERNAL_CAPI_INFRA_ONLY: "true"
+    workflow: openshift-e2e-external-oci-capi
 - as: e2e-aws-ovn-kube-apiserver-rollout
   interval: 168h
   steps:
