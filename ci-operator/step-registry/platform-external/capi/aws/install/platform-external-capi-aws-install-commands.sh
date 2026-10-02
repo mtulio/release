@@ -115,12 +115,12 @@ SUBST_INPUTS=(
   "${INSTALL_DIR}"/external-install/machines/*.yaml
 )
 sed -i \
-  -e "s/mrb-ext0/${INFRA_ID}/g" \
+  -e "s/CLUSTER_ID/${INFRA_ID}/g" \
   -e "s/ami-REPLACE/${RHCOS_AMI}/g" \
   -e "s/us-east-1/${AWS_REGION}/g" \
   "${SUBST_INPUTS[@]}"
 
-capi_assert_no_placeholders 'mrb-ext0|ami-REPLACE' "${SUBST_INPUTS[@]}"
+capi_assert_no_placeholders 'CLUSTER_ID|ami-REPLACE' "${SUBST_INPUTS[@]}"
 
 cp -v "${INSTALL_DIR}/external-install/cluster.yaml" "${ARTIFACT_DIR}/capi-cluster.yaml"
 

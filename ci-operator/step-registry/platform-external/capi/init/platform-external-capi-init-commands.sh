@@ -265,7 +265,7 @@ export -f capi_oci_cli_config
 # without ever becoming a shell word: there is no interpolation, no echo and
 # no argument that could be traced.
 function capi_oci_identity_secret() {
-  local dest=$1 name=${2:-CLUSTER-ID-oci-credentials}
+  local dest=$1 name=${2:-CLUSTER_ID-oci-credentials}
   python3 - "${CLUSTER_PROFILE_DIR}" "${dest}" "${name}" <<'PY'
 import pathlib, sys, yaml
 
